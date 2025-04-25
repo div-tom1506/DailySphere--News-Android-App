@@ -60,5 +60,6 @@ dependencies {
     implementation(libs.retrofit)
     implementation(libs.converter.gson)
     implementation(libs.glide)
+    implementation(libs.androidx.recyclerview)
     kapt(libs.compiler)
 }

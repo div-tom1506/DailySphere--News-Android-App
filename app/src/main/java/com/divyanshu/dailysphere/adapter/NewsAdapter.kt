@@ -1,4 +1,7 @@
 package com.divyanshu.dailysphere.adapter
 
-class NewsAdapter {
+import com.divyanshu.dailysphere.model.Article
+
+class NewsAdapter (private var articles: List<Article>){
+
 }
