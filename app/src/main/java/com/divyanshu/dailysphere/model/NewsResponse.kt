@@ -9,8 +9,8 @@ data class NewsResponse (
 data class Article(
     val title: String,
     val description: String?,
-    val link: String,
+    val link: String?,
     val imageUrl: String?,
-    val pubDate: String,
+    val pubDate: String?,
     val content: String?
 )
