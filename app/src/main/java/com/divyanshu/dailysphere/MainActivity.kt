@@ -44,7 +44,7 @@ class MainActivity : AppCompatActivity() {
     private var isLoading = false
     private var currentQuery = "top"
     private var selectedLanguage = "en"
-    private var selectedCountry = "in"
+    private var selectedCountry: String? = null
 
     private val apiKey = BuildConfig.NEWS_API_KEY
 
@@ -57,10 +57,9 @@ class MainActivity : AppCompatActivity() {
         "Science",
         "Entertainment"
     )
-    private val languages =
-        listOf("English (en)", "Hindi (hi)", "Spanish (es)", "French (fr)", "German (de)")
+    private val languages = listOf("English (en)", "Hindi (hi)")
     private val countries =
-        listOf("India (in)", "USA (us)", "UK (gb)", "Canada (ca)", "Australia (au)")
+        listOf("", "India (in)", "USA (us)", "UK (gb)", "Canada (ca)", "Australia (au)")
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -153,7 +152,9 @@ class MainActivity : AppCompatActivity() {
                 position: Int,
                 id: Long
             ) {
-                selectedCountry = countries[position].takeLast(3).replace("(", "").replace(")", "")
+                selectedCountry =
+                    if (position == 0) null else countries[position].takeLast(3).replace("(", "")
+                        .replace(")", "")
                 Log.d("MainActivity", "Country selected: $selectedCountry")
                 fetchNews(currentQuery, isNewSearch = true)
             }
@@ -214,6 +215,7 @@ class MainActivity : AppCompatActivity() {
             "MainActivity",
             "Fetching news: query=$query, newSearch=$isNewSearch, pageToken=$nextPageToken"
         )
+
         if (!isNetworkAvailable()) {
             shimmerLayout.stopShimmer()
             shimmerLayout.visibility = View.GONE
