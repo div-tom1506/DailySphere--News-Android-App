@@ -65,5 +65,9 @@ dependencies {
     implementation(libs.androidx.appcompat)
     implementation(libs.androidx.cardview)
     implementation(libs.androidx.browser)
+    implementation(libs.androidx.core.splashscreen)
+    implementation(libs.shimmer)
+    implementation(libs.androidx.core.ktx.v1120)
+    implementation(libs.logging.interceptor)
     kapt(libs.compiler)
 }

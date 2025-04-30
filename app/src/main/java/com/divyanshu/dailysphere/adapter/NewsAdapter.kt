@@ -9,8 +9,8 @@ import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import com.divyanshu.dailysphere.R
-import com.divyanshu.dailysphere.model.Article
 import com.divyanshu.dailysphere.WebViewActivity
+import com.divyanshu.dailysphere.model.Article
 
 class NewsAdapter(private var articles: List<Article>) :
     RecyclerView.Adapter<NewsAdapter.NewsViewHolder>() {

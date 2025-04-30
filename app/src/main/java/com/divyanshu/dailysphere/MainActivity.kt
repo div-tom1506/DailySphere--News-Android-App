@@ -1,8 +1,19 @@
 package com.divyanshu.dailysphere
 
+import android.content.Context
+import android.net.ConnectivityManager
+import android.net.NetworkCapabilities
 import android.os.Bundle
+import android.util.Log
 import android.view.View
-import android.widget.*
+import android.widget.AdapterView
+import android.widget.ArrayAdapter
+import android.widget.Button
+import android.widget.ImageButton
+import android.widget.LinearLayout
+import android.widget.SearchView
+import android.widget.Spinner
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -10,6 +21,7 @@ import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import com.divyanshu.dailysphere.adapter.NewsAdapter
 import com.divyanshu.dailysphere.model.NewsResponse
 import com.divyanshu.dailysphere.network.RetrofitInstance
+import com.facebook.shimmer.ShimmerFrameLayout
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
@@ -23,7 +35,10 @@ class MainActivity : AppCompatActivity() {
     private lateinit var spinnerLanguage: Spinner
     private lateinit var spinnerCountry: Spinner
     private lateinit var swipeRefreshLayout: SwipeRefreshLayout
-    private lateinit var progressBar: ProgressBar
+    private lateinit var shimmerLayout: ShimmerFrameLayout
+    private lateinit var noInternetLayout: LinearLayout
+    private lateinit var retryButton: Button
+    private lateinit var scrollToTopBtn: ImageButton
 
     private var currentPage = 1
     private var isLoading = false
@@ -31,24 +46,27 @@ class MainActivity : AppCompatActivity() {
     private var selectedLanguage = "en"
     private var selectedCountry = "in"
 
-    // to be removed
-    private val apiKey = ""
+    private val apiKey = "pub_82986b5dafae614a568c44ba4a7532ab67b91"
 
     private val categories = listOf(
-        "Top Headlines", "Technology", "Sports", "Business", "Health", "Science", "Entertainment"
+        "Top Headlines",
+        "Technology",
+        "Sports",
+        "Business",
+        "Health",
+        "Science",
+        "Entertainment"
     )
-
-    private val languages = listOf(
-        "English (en)", "Hindi (hi)", "Spanish (es)", "French (fr)", "German (de)"
-    )
-
-    private val countries = listOf(
-        "USA (us)", "India (in)", "UK (gb)", "Canada (ca)", "Australia (au)"
-    )
+    private val languages =
+        listOf("English (en)", "Hindi (hi)", "Spanish (es)", "French (fr)", "German (de)")
+    private val countries =
+        listOf("India (in)", "USA (us)", "UK (gb)", "Canada (ca)", "Australia (au)")
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+
+        Log.d("MainActivity", "onCreate: Initializing views")
 
         searchView = findViewById(R.id.searchView)
         spinnerCategory = findViewById(R.id.spinnerCategory)
@@ -56,61 +74,90 @@ class MainActivity : AppCompatActivity() {
         spinnerCountry = findViewById(R.id.spinnerCountry)
         swipeRefreshLayout = findViewById(R.id.swipeRefreshLayout)
         recyclerView = findViewById(R.id.recyclerView)
-        progressBar = findViewById(R.id.progressBar)
+        shimmerLayout = findViewById(R.id.shimmerLayout)
+        noInternetLayout = findViewById(R.id.noInternetLayout)
+        retryButton = findViewById(R.id.retryButton)
+        scrollToTopBtn = findViewById(R.id.scrollToTopBtn)
 
         setupRecyclerView()
         setupSpinners()
         setupSearchView()
         setupSwipeRefresh()
+        setupPagination()
+        setupScrollToTop()
+
+        retryButton.setOnClickListener {
+            Log.d("MainActivity", "Retry button clicked")
+            fetchNews(currentQuery, isNewSearch = true)
+        }
 
         fetchNews(currentQuery, isNewSearch = true)
-
-        setupPagination()
     }
 
     private fun setupRecyclerView() {
         recyclerView.layoutManager = LinearLayoutManager(this)
         newsAdapter = NewsAdapter(listOf())
         recyclerView.adapter = newsAdapter
+        Log.d("MainActivity", "RecyclerView set up")
     }
 
     private fun setupSpinners() {
-        val categoryAdapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, categories)
-        categoryAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
-        spinnerCategory.adapter = categoryAdapter
-
-        val languageAdapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, languages)
-        languageAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
-        spinnerLanguage.adapter = languageAdapter
-
-        val countryAdapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, countries)
-        countryAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
-        spinnerCountry.adapter = countryAdapter
+        spinnerCategory.adapter =
+            ArrayAdapter(this, android.R.layout.simple_spinner_item, categories).apply {
+                setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+            }
+        spinnerLanguage.adapter =
+            ArrayAdapter(this, android.R.layout.simple_spinner_item, languages).apply {
+                setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+            }
+        spinnerCountry.adapter =
+            ArrayAdapter(this, android.R.layout.simple_spinner_item, countries).apply {
+                setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+            }
 
         spinnerCategory.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
-            override fun onItemSelected(parent: AdapterView<*>, view: View?, position: Int, id: Long) {
-                currentQuery = when (categories[position]) {
-                    "Top Headlines" -> "top"
-                    else -> categories[position].lowercase()
-                }
+            override fun onItemSelected(
+                parent: AdapterView<*>,
+                view: View?,
+                position: Int,
+                id: Long
+            ) {
+                currentQuery =
+                    if (categories[position] == "Top Headlines") "top" else categories[position].lowercase()
+                Log.d("MainActivity", "Category selected: $currentQuery")
                 fetchNews(currentQuery, isNewSearch = true)
             }
+
             override fun onNothingSelected(parent: AdapterView<*>) {}
         }
 
         spinnerLanguage.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
-            override fun onItemSelected(parent: AdapterView<*>, view: View?, position: Int, id: Long) {
+            override fun onItemSelected(
+                parent: AdapterView<*>,
+                view: View?,
+                position: Int,
+                id: Long
+            ) {
                 selectedLanguage = languages[position].takeLast(3).replace("(", "").replace(")", "")
+                Log.d("MainActivity", "Language selected: $selectedLanguage")
                 fetchNews(currentQuery, isNewSearch = true)
             }
+
             override fun onNothingSelected(parent: AdapterView<*>) {}
         }
 
         spinnerCountry.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
-            override fun onItemSelected(parent: AdapterView<*>, view: View?, position: Int, id: Long) {
+            override fun onItemSelected(
+                parent: AdapterView<*>,
+                view: View?,
+                position: Int,
+                id: Long
+            ) {
                 selectedCountry = countries[position].takeLast(3).replace("(", "").replace(")", "")
+                Log.d("MainActivity", "Country selected: $selectedCountry")
                 fetchNews(currentQuery, isNewSearch = true)
             }
+
             override fun onNothingSelected(parent: AdapterView<*>) {}
         }
     }
@@ -118,18 +165,21 @@ class MainActivity : AppCompatActivity() {
     private fun setupSearchView() {
         searchView.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
             override fun onQueryTextSubmit(query: String?): Boolean {
-                if (!query.isNullOrEmpty()) {
-                    currentQuery = query
+                query?.let {
+                    currentQuery = it
+                    Log.d("MainActivity", "Search submitted: $currentQuery")
                     fetchNews(currentQuery, isNewSearch = true)
                 }
                 return true
             }
+
             override fun onQueryTextChange(newText: String?): Boolean = false
         })
     }
 
     private fun setupSwipeRefresh() {
         swipeRefreshLayout.setOnRefreshListener {
+            Log.d("MainActivity", "Swipe to refresh triggered")
             fetchNews(currentQuery, isNewSearch = true)
         }
     }
@@ -138,58 +188,112 @@ class MainActivity : AppCompatActivity() {
         recyclerView.addOnScrollListener(object : RecyclerView.OnScrollListener() {
             override fun onScrolled(rv: RecyclerView, dx: Int, dy: Int) {
                 super.onScrolled(rv, dx, dy)
-
                 val layoutManager = rv.layoutManager as LinearLayoutManager
                 val lastVisibleItem = layoutManager.findLastCompletelyVisibleItemPosition()
 
                 if (!isLoading && lastVisibleItem == newsAdapter.itemCount - 1) {
                     currentPage++
+                    Log.d("MainActivity", "Fetching next page: $currentPage")
                     fetchNews(currentQuery, isNewSearch = false)
                 }
+
+                scrollToTopBtn.visibility =
+                    if (layoutManager.findFirstVisibleItemPosition() > 5) View.VISIBLE else View.GONE
             }
         })
     }
 
+    private fun setupScrollToTop() {
+        scrollToTopBtn.setOnClickListener {
+            Log.d("MainActivity", "Scroll to top clicked")
+            recyclerView.smoothScrollToPosition(0)
+        }
+    }
+
     private fun fetchNews(query: String, isNewSearch: Boolean) {
-        isLoading = true
-        if (isNewSearch) {
-            currentPage = 1
-            showLoading(true)
+        Log.d(
+            "MainActivity",
+            "Fetching news: query=$query, newSearch=$isNewSearch, page=$currentPage"
+        )
+        if (!isNetworkAvailable()) {
+            shimmerLayout.stopShimmer()
+            shimmerLayout.visibility = View.GONE
+            swipeRefreshLayout.visibility = View.GONE
+            noInternetLayout.visibility = View.VISIBLE
+            Log.e("NewsFetch", "No internet connection")
+            return
         }
 
-        RetrofitInstance.api.getNews(
+        shimmerLayout.visibility = View.VISIBLE
+        shimmerLayout.startShimmer()
+        noInternetLayout.visibility = View.GONE
+        swipeRefreshLayout.visibility = View.VISIBLE
+
+        isLoading = true
+        if (isNewSearch) currentPage = 1
+
+        val call = RetrofitInstance.api.getNews(
             apiKey = apiKey,
-            query = query,
+            //query = null,
             language = selectedLanguage,
             country = selectedCountry,
+            category = query,
             page = currentPage
-        ).enqueue(object : Callback<NewsResponse> {
+        )
+
+        Log.d(
+            "NewsFetch",
+            "Fetching news: query=$query, lang=$selectedLanguage, country=$selectedCountry, page=$currentPage"
+        )
+
+        call.enqueue(object : Callback<NewsResponse> {
             override fun onResponse(call: Call<NewsResponse>, response: Response<NewsResponse>) {
+                shimmerLayout.stopShimmer()
+                shimmerLayout.visibility = View.GONE
+                swipeRefreshLayout.isRefreshing = false
+                isLoading = false
+
                 if (response.isSuccessful) {
                     val newArticles = response.body()?.results ?: emptyList()
+                    Log.d("MainActivity", "Fetched ${newArticles.size} articles")
                     if (isNewSearch) {
                         newsAdapter.updateNews(newArticles)
                     } else {
                         newsAdapter.appendNews(newArticles)
                     }
                 } else {
-                    Toast.makeText(this@MainActivity, "Failed to fetch news", Toast.LENGTH_SHORT).show()
+                    Log.e(
+                        "NewsFetch",
+                        "Response failed: code=${response.code()}, message=${response.message()}"
+                    )
+                    Toast.makeText(
+                        this@MainActivity,
+                        "Failed to fetch news. Code: ${response.code()}",
+                        Toast.LENGTH_SHORT
+                    ).show()
                 }
-                isLoading = false
-                swipeRefreshLayout.isRefreshing = false
-                showLoading(false)
             }
 
             override fun onFailure(call: Call<NewsResponse>, t: Throwable) {
-                isLoading = false
+                shimmerLayout.stopShimmer()
+                shimmerLayout.visibility = View.GONE
                 swipeRefreshLayout.isRefreshing = false
-                showLoading(false)
-                Toast.makeText(this@MainActivity, "Error: ${t.localizedMessage}", Toast.LENGTH_SHORT).show()
+                isLoading = false
+                Log.e("NewsFetch", "Error: ${t.localizedMessage}", t)
+                Toast.makeText(
+                    this@MainActivity,
+                    "Something went wrong. Check logs.",
+                    Toast.LENGTH_SHORT
+                ).show()
             }
         })
     }
 
-    private fun showLoading(isLoading: Boolean) {
-        progressBar.visibility = if (isLoading) View.VISIBLE else View.GONE
+    private fun isNetworkAvailable(): Boolean {
+        val connectivityManager =
+            getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+        val network = connectivityManager.activeNetwork ?: return false
+        val capabilities = connectivityManager.getNetworkCapabilities(network) ?: return false
+        return capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
     }
 }

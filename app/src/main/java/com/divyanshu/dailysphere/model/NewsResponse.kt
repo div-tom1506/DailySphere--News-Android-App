@@ -1,6 +1,6 @@
 package com.divyanshu.dailysphere.model
 
-data class NewsResponse (
+data class NewsResponse(
     val status: String,
     val totalResults: Int,
     val results: List<Article>
