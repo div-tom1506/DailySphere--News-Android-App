@@ -15,24 +15,28 @@ import android.widget.SearchView
 import android.widget.Spinner
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.view.isVisible
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
+import com.divyanshu.dailysphere.adapter.CategoryAdapter
 import com.divyanshu.dailysphere.adapter.NewsAdapter
+import com.divyanshu.dailysphere.model.CategoryItem
 import com.divyanshu.dailysphere.model.NewsResponse
 import com.divyanshu.dailysphere.network.RetrofitInstance
 import com.facebook.shimmer.ShimmerFrameLayout
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
-import androidx.core.view.isVisible
 
 class MainActivity : AppCompatActivity() {
+
+    private lateinit var categoryRecyclerView: RecyclerView
+    private lateinit var categoryAdapter: CategoryAdapter
 
     private lateinit var newsAdapter: NewsAdapter
     private lateinit var recyclerView: RecyclerView
     private lateinit var searchView: SearchView
-    private lateinit var spinnerCategory: Spinner
     private lateinit var spinnerLanguage: Spinner
     private lateinit var spinnerCountry: Spinner
     private lateinit var swipeRefreshLayout: SwipeRefreshLayout
@@ -50,13 +54,13 @@ class MainActivity : AppCompatActivity() {
     private val apiKey = BuildConfig.NEWS_API_KEY
 
     private val categories = listOf(
-        "Top Headlines",
-        "Technology",
-        "Sports",
-        "Business",
-        "Health",
-        "Science",
-        "Entertainment"
+        CategoryItem("Top Headlines", true),
+        CategoryItem("Technology"),
+        CategoryItem("Sports"),
+        CategoryItem("Business"),
+        CategoryItem("Health"),
+        CategoryItem("Science"),
+        CategoryItem("Entertainment")
     )
     private val languages = listOf("English (en)", "Hindi (hi)")
     private val countries =
@@ -69,7 +73,6 @@ class MainActivity : AppCompatActivity() {
         Log.d("MainActivity", "onCreate: Initializing views")
 
         searchView = findViewById(R.id.searchView)
-        spinnerCategory = findViewById(R.id.spinnerCategory)
         spinnerLanguage = findViewById(R.id.spinnerLanguage)
         spinnerCountry = findViewById(R.id.spinnerCountry)
         swipeRefreshLayout = findViewById(R.id.swipeRefreshLayout)
@@ -78,8 +81,10 @@ class MainActivity : AppCompatActivity() {
         noInternetLayout = findViewById(R.id.noInternetLayout)
         retryButton = findViewById(R.id.retryButton)
         scrollToTopBtn = findViewById(R.id.scrollToTopBtn)
+        categoryRecyclerView = findViewById(R.id.categoryRecyclerView)
 
         setupRecyclerView()
+        setupCategoryRecyclerView()
         setupSpinners()
         setupSearchView()
         setupSwipeRefresh()
@@ -101,11 +106,16 @@ class MainActivity : AppCompatActivity() {
         Log.d("MainActivity", "RecyclerView set up")
     }
 
+    private fun setupCategoryRecyclerView() {
+        categoryAdapter = CategoryAdapter(categories) { selectedCategory ->
+            currentQuery = if (selectedCategory == "Top Headlines") "top" else selectedCategory.lowercase()
+            fetchNews(currentQuery, isNewSearch = true)
+        }
+        categoryRecyclerView.layoutManager = LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false)
+        categoryRecyclerView.adapter = categoryAdapter
+    }
+
     private fun setupSpinners() {
-        spinnerCategory.adapter =
-            ArrayAdapter(this, android.R.layout.simple_spinner_item, categories).apply {
-                setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
-            }
         spinnerLanguage.adapter =
             ArrayAdapter(this, android.R.layout.simple_spinner_item, languages).apply {
                 setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
@@ -114,22 +124,6 @@ class MainActivity : AppCompatActivity() {
             ArrayAdapter(this, android.R.layout.simple_spinner_item, countries).apply {
                 setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
             }
-
-        spinnerCategory.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
-            override fun onItemSelected(
-                parent: AdapterView<*>,
-                view: View?,
-                position: Int,
-                id: Long
-            ) {
-                currentQuery =
-                    if (categories[position] == "Top Headlines") "top" else categories[position].lowercase()
-                Log.d("MainActivity", "Category selected: $currentQuery")
-                fetchNews(currentQuery, isNewSearch = true)
-            }
-
-            override fun onNothingSelected(parent: AdapterView<*>) {}
-        }
 
         spinnerLanguage.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
             override fun onItemSelected(

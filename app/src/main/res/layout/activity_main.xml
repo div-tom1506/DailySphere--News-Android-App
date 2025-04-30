@@ -18,32 +18,37 @@
             android:layout_height="wrap_content"
             android:queryHint="Search News..." />
 
+        <!-- Horizontal Category Chips -->
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/categoryRecyclerView"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:overScrollMode="never"
+            android:paddingVertical="4dp"
+            android:orientation="horizontal" />
+
+        <!-- Language & Country Spinners -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
             android:orientation="horizontal"
-            android:weightSum="3">
-
-            <Spinner
-                android:id="@+id/spinnerCategory"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1" />
+            android:weightSum="2">
 
             <Spinner
                 android:id="@+id/spinnerLanguage"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="6dp"
-                android:layout_marginEnd="6dp"
-                android:layout_weight="1" />
+                android:layout_weight="1"
+                android:layout_marginEnd="4dp" />
 
             <Spinner
                 android:id="@+id/spinnerCountry"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:layout_weight="1" />
+                android:layout_weight="1"
+                android:layout_marginStart="4dp" />
         </LinearLayout>
     </LinearLayout>
 
