@@ -109,13 +109,16 @@
     <!-- Scroll to Top Button -->
     <ImageButton
         android:id="@+id/scrollToTopBtn"
-        android:layout_width="56dp"
-        android:layout_height="56dp"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
         android:layout_alignParentEnd="true"
         android:layout_alignParentBottom="true"
         android:layout_margin="16dp"
-        android:background="?attr/selectableItemBackgroundBorderless"
-        android:backgroundTint="#6200EE"
-        android:src="@android:drawable/arrow_up_float"
+        android:background="@drawable/scroll_top_background"
+        android:contentDescription="@string/scroll_to_top"
+        android:elevation="8dp"
+        android:scaleType="centerInside"
+        android:src="@drawable/ic_arrow_up"
+        android:alpha="0.7"
         android:visibility="gone" />
 </RelativeLayout>

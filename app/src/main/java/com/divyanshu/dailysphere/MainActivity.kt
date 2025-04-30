@@ -25,6 +25,7 @@ import com.facebook.shimmer.ShimmerFrameLayout
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
+import androidx.core.view.isVisible
 
 class MainActivity : AppCompatActivity() {
 
@@ -197,8 +198,24 @@ class MainActivity : AppCompatActivity() {
                     fetchNews(currentQuery, isNewSearch = false)
                 }
 
-                scrollToTopBtn.visibility =
-                    if (layoutManager.findFirstVisibleItemPosition() > 5) View.VISIBLE else View.GONE
+                // Scroll to top button animation
+                if (layoutManager.findFirstVisibleItemPosition() > 5) {
+                    if (scrollToTopBtn.visibility != View.VISIBLE) {
+                        scrollToTopBtn.animate()
+                            .alpha(1f)
+                            .setDuration(300)
+                            .withStartAction { scrollToTopBtn.visibility = View.VISIBLE }
+                            .start()
+                    }
+                } else {
+                    if (scrollToTopBtn.isVisible) {
+                        scrollToTopBtn.animate()
+                            .alpha(0f)
+                            .setDuration(300)
+                            .withEndAction { scrollToTopBtn.visibility = View.GONE }
+                            .start()
+                    }
+                }
             }
         })
     }
