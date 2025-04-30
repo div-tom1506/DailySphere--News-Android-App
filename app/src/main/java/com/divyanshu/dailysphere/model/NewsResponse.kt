@@ -3,7 +3,8 @@ package com.divyanshu.dailysphere.model
 data class NewsResponse(
     val status: String,
     val totalResults: Int,
-    val results: List<Article>
+    val results: List<Article>,
+    val nextPage: String?
 )
 
 data class Article(

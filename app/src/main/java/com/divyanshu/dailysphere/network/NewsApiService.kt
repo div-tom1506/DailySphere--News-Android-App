@@ -9,10 +9,9 @@ interface NewsApiService {
     @GET("api/1/news")
     fun getNews(
         @Query("apiKey") apiKey: String,
-        //@Query("q") query: String?,
+        @Query("q") query: String?,
         @Query("language") language: String = "en",
         @Query("country") country: String = "in",
-        @Query("category") category: String?,
-        @Query("page") page: Int = 1
+        @Query("page") page: String? = null
     ): Call<NewsResponse>
 }

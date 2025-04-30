@@ -40,13 +40,13 @@ class MainActivity : AppCompatActivity() {
     private lateinit var retryButton: Button
     private lateinit var scrollToTopBtn: ImageButton
 
-    private var currentPage = 1
+    private var nextPageToken: String? = null
     private var isLoading = false
     private var currentQuery = "top"
     private var selectedLanguage = "en"
     private var selectedCountry = "in"
 
-    private val apiKey = "pub_82986b5dafae614a568c44ba4a7532ab67b91"
+    private val apiKey = BuildConfig.NEWS_API_KEY
 
     private val categories = listOf(
         "Top Headlines",
@@ -191,9 +191,8 @@ class MainActivity : AppCompatActivity() {
                 val layoutManager = rv.layoutManager as LinearLayoutManager
                 val lastVisibleItem = layoutManager.findLastCompletelyVisibleItemPosition()
 
-                if (!isLoading && lastVisibleItem == newsAdapter.itemCount - 1) {
-                    currentPage++
-                    Log.d("MainActivity", "Fetching next page: $currentPage")
+                if (!isLoading && lastVisibleItem == newsAdapter.itemCount - 1 && nextPageToken != null) {
+                    Log.d("MainActivity", "Fetching next page: $nextPageToken")
                     fetchNews(currentQuery, isNewSearch = false)
                 }
 
@@ -213,7 +212,7 @@ class MainActivity : AppCompatActivity() {
     private fun fetchNews(query: String, isNewSearch: Boolean) {
         Log.d(
             "MainActivity",
-            "Fetching news: query=$query, newSearch=$isNewSearch, page=$currentPage"
+            "Fetching news: query=$query, newSearch=$isNewSearch, pageToken=$nextPageToken"
         )
         if (!isNetworkAvailable()) {
             shimmerLayout.stopShimmer()
@@ -230,20 +229,19 @@ class MainActivity : AppCompatActivity() {
         swipeRefreshLayout.visibility = View.VISIBLE
 
         isLoading = true
-        if (isNewSearch) currentPage = 1
+        if (isNewSearch) nextPageToken = null
 
         val call = RetrofitInstance.api.getNews(
             apiKey = apiKey,
-            //query = null,
+            query = query,
             language = selectedLanguage,
             country = selectedCountry,
-            category = query,
-            page = currentPage
+            page = nextPageToken
         )
 
         Log.d(
             "NewsFetch",
-            "Fetching news: query=$query, lang=$selectedLanguage, country=$selectedCountry, page=$currentPage"
+            "Fetching news: query=$query, lang=$selectedLanguage, country=$selectedCountry, page=$nextPageToken"
         )
 
         call.enqueue(object : Callback<NewsResponse> {
@@ -254,8 +252,13 @@ class MainActivity : AppCompatActivity() {
                 isLoading = false
 
                 if (response.isSuccessful) {
-                    val newArticles = response.body()?.results ?: emptyList()
-                    Log.d("MainActivity", "Fetched ${newArticles.size} articles")
+                    val newsResponse = response.body()
+                    val newArticles = newsResponse?.results ?: emptyList()
+                    nextPageToken = newsResponse?.nextPage
+                    Log.d(
+                        "MainActivity",
+                        "Fetched ${newArticles.size} articles, nextPageToken=$nextPageToken"
+                    )
                     if (isNewSearch) {
                         newsAdapter.updateNews(newArticles)
                     } else {
