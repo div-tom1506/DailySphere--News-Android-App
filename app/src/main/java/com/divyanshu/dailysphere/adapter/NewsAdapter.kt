@@ -30,18 +30,29 @@ class NewsAdapter(private var articles: List<Article>) :
 
     override fun onBindViewHolder(holder: NewsViewHolder, position: Int) {
         val article = articles[position]
+
         holder.title.text = article.title
         holder.pubDate.text = article.pubDate ?: "Unknown Date"
         holder.desc.text = article.description ?: "No description available"
-        Glide.with(holder.itemView.context)
-            .load(article.imageUrl)
-            .into(holder.image)
+
+        val imageUrl = article.image_url
+        if (imageUrl.isNullOrEmpty()) {
+            android.util.Log.d("NewsAdapter", "Image URL is null or empty at position $position")
+        } else {
+            android.util.Log.d("NewsAdapter", "Loading image from URL: $imageUrl at position $position")
+            Glide.with(holder.itemView.context)
+                .load(imageUrl)
+                .placeholder(R.drawable.shimmer_drawable)
+                .error(R.drawable.ic_image_not_found)
+                .into(holder.image)
+        }
 
         // Handle item click and open WebViewActivity
         holder.itemView.setOnClickListener {
             article.link?.let { url ->
+                android.util.Log.d("NewsAdapter", "Opening article: $url")
                 val intent = Intent(holder.itemView.context, WebViewActivity::class.java)
-                intent.putExtra("URL", url) // Pass the URL to WebViewActivity
+                intent.putExtra("URL", url) // Passing the URL to WebViewActivity
                 holder.itemView.context.startActivity(intent)
             }
         }

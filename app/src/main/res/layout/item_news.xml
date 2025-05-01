@@ -17,7 +17,7 @@
             android:id="@+id/newsImage"
             android:layout_width="match_parent"
             android:layout_height="180dp"
-            android:contentDescription="News Image"
+            android:contentDescription="@string/news_image"
             android:scaleType="centerCrop" />
 
         <TextView
@@ -25,7 +25,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
-            android:text="Title"
+            android:text="@string/title"
             android:textSize="18sp"
             android:textStyle="bold" />
 
@@ -34,7 +34,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="4dp"
-            android:text="Published Date"
+            android:text="@string/published_date"
             android:textColor="#757575"
             android:textSize="12sp" />
 
@@ -43,7 +43,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="6dp"
-            android:text="Description"
+            android:text="@string/description"
             android:textSize="14sp" />
 
     </LinearLayout>
