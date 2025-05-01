@@ -55,12 +55,17 @@ class MainActivity : AppCompatActivity() {
 
     private val categories = listOf(
         CategoryItem("Top Headlines", true),
-        CategoryItem("Technology"),
+        CategoryItem("World"),
         CategoryItem("Sports"),
+        CategoryItem("Politics"),
+        CategoryItem("Education"),
         CategoryItem("Business"),
+        CategoryItem("Entertainment"),
+        CategoryItem("Business"),
+        CategoryItem("Technology"),
         CategoryItem("Health"),
         CategoryItem("Science"),
-        CategoryItem("Entertainment")
+        CategoryItem("Tourism")
     )
     private val languages = listOf("English (en)", "Hindi (hi)")
     private val countries =
