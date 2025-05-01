@@ -1,5 +1,6 @@
 package com.divyanshu.dailysphere.adapter
 
+import android.app.Activity
 import android.content.Intent
 import android.view.LayoutInflater
 import android.view.View
@@ -54,6 +55,7 @@ class NewsAdapter(private var articles: List<Article>) :
                 val intent = Intent(holder.itemView.context, WebViewActivity::class.java)
                 intent.putExtra("URL", url) // Passing the URL to WebViewActivity
                 holder.itemView.context.startActivity(intent)
+                (holder.itemView.context as Activity).overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out)
             }
         }
     }
