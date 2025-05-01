@@ -4,8 +4,8 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
-import com.divyanshu.dailysphere.R
 import androidx.recyclerview.widget.RecyclerView
+import com.divyanshu.dailysphere.R
 import com.divyanshu.dailysphere.model.CategoryItem
 
 class CategoryAdapter(
@@ -52,7 +52,6 @@ class CategoryAdapter(
             onItemClick(categories[clickedPos].name) // Call the lambda function passed to the constructor
         }
     }
-
 
 
     override fun getItemCount(): Int = categories.size

@@ -5,15 +5,17 @@ import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
 import android.os.Bundle
 import android.util.Log
+import android.view.LayoutInflater
 import android.view.View
-import android.widget.AdapterView
+import android.view.inputmethod.EditorInfo
 import android.widget.ArrayAdapter
 import android.widget.Button
+import android.widget.EditText
 import android.widget.ImageButton
 import android.widget.LinearLayout
-import android.widget.SearchView
 import android.widget.Spinner
 import android.widget.Toast
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.isVisible
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -36,14 +38,13 @@ class MainActivity : AppCompatActivity() {
 
     private lateinit var newsAdapter: NewsAdapter
     private lateinit var recyclerView: RecyclerView
-    private lateinit var searchView: SearchView
-    private lateinit var spinnerLanguage: Spinner
-    private lateinit var spinnerCountry: Spinner
+    private lateinit var searchView: EditText
     private lateinit var swipeRefreshLayout: SwipeRefreshLayout
     private lateinit var shimmerLayout: ShimmerFrameLayout
     private lateinit var noInternetLayout: LinearLayout
     private lateinit var retryButton: Button
     private lateinit var scrollToTopBtn: ImageButton
+    private lateinit var settingsButton: ImageButton
 
     private var nextPageToken: String? = null
     private var isLoading = false
@@ -61,7 +62,6 @@ class MainActivity : AppCompatActivity() {
         CategoryItem("Education"),
         CategoryItem("Business"),
         CategoryItem("Entertainment"),
-        CategoryItem("Business"),
         CategoryItem("Technology"),
         CategoryItem("Health"),
         CategoryItem("Science"),
@@ -77,9 +77,7 @@ class MainActivity : AppCompatActivity() {
 
         Log.d("MainActivity", "onCreate: Initializing views")
 
-        searchView = findViewById(R.id.searchView)
-        spinnerLanguage = findViewById(R.id.spinnerLanguage)
-        spinnerCountry = findViewById(R.id.spinnerCountry)
+        searchView = findViewById(R.id.editTextSearch)
         swipeRefreshLayout = findViewById(R.id.swipeRefreshLayout)
         recyclerView = findViewById(R.id.recyclerView)
         shimmerLayout = findViewById(R.id.shimmerLayout)
@@ -87,10 +85,11 @@ class MainActivity : AppCompatActivity() {
         retryButton = findViewById(R.id.retryButton)
         scrollToTopBtn = findViewById(R.id.scrollToTopBtn)
         categoryRecyclerView = findViewById(R.id.categoryRecyclerView)
+        settingsButton = findViewById(R.id.settingsButton)
 
         setupRecyclerView()
         setupCategoryRecyclerView()
-        setupSpinners()
+        setupSettingsDialog()
         setupSearchView()
         setupSwipeRefresh()
         setupPagination()
@@ -113,69 +112,66 @@ class MainActivity : AppCompatActivity() {
 
     private fun setupCategoryRecyclerView() {
         categoryAdapter = CategoryAdapter(categories) { selectedCategory ->
-            currentQuery = if (selectedCategory == "Top Headlines") "top" else selectedCategory.lowercase()
+            currentQuery =
+                if (selectedCategory == "Top Headlines") "top" else selectedCategory.lowercase()
             fetchNews(currentQuery, isNewSearch = true)
         }
-        categoryRecyclerView.layoutManager = LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false)
+        categoryRecyclerView.layoutManager =
+            LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false)
         categoryRecyclerView.adapter = categoryAdapter
     }
 
-    private fun setupSpinners() {
-        spinnerLanguage.adapter =
-            ArrayAdapter(this, android.R.layout.simple_spinner_item, languages).apply {
-                setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
-            }
-        spinnerCountry.adapter =
-            ArrayAdapter(this, android.R.layout.simple_spinner_item, countries).apply {
-                setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
-            }
+    private fun setupSettingsDialog() {
+        settingsButton.setOnClickListener {
+            val dialogView =
+                LayoutInflater.from(this).inflate(R.layout.dialog_language_country, null)
+            val dialog = AlertDialog.Builder(this)
+                .setView(dialogView)
+                .setTitle("Select Language & Country")
+                .setPositiveButton("Apply") { _, _ ->
+                    val spinnerLang = dialogView.findViewById<Spinner>(R.id.dialogSpinnerLanguage)
+                    val spinnerCountry = dialogView.findViewById<Spinner>(R.id.dialogSpinnerCountry)
+                    selectedLanguage =
+                        languages[spinnerLang.selectedItemPosition].takeLast(3).replace("(", "")
+                            .replace(")", "")
+                    selectedCountry =
+                        if (spinnerCountry.selectedItemPosition == 0) null else countries[spinnerCountry.selectedItemPosition].takeLast(
+                            3
+                        ).replace("(", "").replace(")", "")
+                    fetchNews(currentQuery, isNewSearch = true)
+                }
+                .setNegativeButton("Cancel", null)
+                .create()
 
-        spinnerLanguage.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
-            override fun onItemSelected(
-                parent: AdapterView<*>,
-                view: View?,
-                position: Int,
-                id: Long
-            ) {
-                selectedLanguage = languages[position].takeLast(3).replace("(", "").replace(")", "")
-                Log.d("MainActivity", "Language selected: $selectedLanguage")
-                fetchNews(currentQuery, isNewSearch = true)
-            }
+            val spinnerLang = dialogView.findViewById<Spinner>(R.id.dialogSpinnerLanguage)
+            val spinnerCountry = dialogView.findViewById<Spinner>(R.id.dialogSpinnerCountry)
 
-            override fun onNothingSelected(parent: AdapterView<*>) {}
-        }
+            spinnerLang.adapter =
+                ArrayAdapter(this, android.R.layout.simple_spinner_item, languages).apply {
+                    setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+                }
+            spinnerCountry.adapter =
+                ArrayAdapter(this, android.R.layout.simple_spinner_item, countries).apply {
+                    setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+                }
 
-        spinnerCountry.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
-            override fun onItemSelected(
-                parent: AdapterView<*>,
-                view: View?,
-                position: Int,
-                id: Long
-            ) {
-                selectedCountry =
-                    if (position == 0) null else countries[position].takeLast(3).replace("(", "")
-                        .replace(")", "")
-                Log.d("MainActivity", "Country selected: $selectedCountry")
-                fetchNews(currentQuery, isNewSearch = true)
-            }
-
-            override fun onNothingSelected(parent: AdapterView<*>) {}
+            dialog.show()
         }
     }
 
     private fun setupSearchView() {
-        searchView.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
-            override fun onQueryTextSubmit(query: String?): Boolean {
-                query?.let {
-                    currentQuery = it
-                    Log.d("MainActivity", "Search submitted: $currentQuery")
+        searchView.setOnEditorActionListener { _, actionId, _ ->
+            if (actionId == EditorInfo.IME_ACTION_SEARCH) {
+                val query = searchView.text.toString().trim()
+                if (query.isNotEmpty()) {
+                    currentQuery = query
                     fetchNews(currentQuery, isNewSearch = true)
                 }
-                return true
+                true
+            } else {
+                false
             }
-
-            override fun onQueryTextChange(newText: String?): Boolean = false
-        })
+        }
     }
 
     private fun setupSwipeRefresh() {
@@ -192,14 +188,14 @@ class MainActivity : AppCompatActivity() {
                 val layoutManager = rv.layoutManager as LinearLayoutManager
                 val lastVisibleItem = layoutManager.findLastCompletelyVisibleItemPosition()
 
-                if (!isLoading && lastVisibleItem == newsAdapter.itemCount - 1 && nextPageToken != null) {
+                if (!isLoading && lastVisibleItem == newsAdapter.itemCount - 1 && !nextPageToken.isNullOrEmpty()) {
                     Log.d("MainActivity", "Fetching next page: $nextPageToken")
                     fetchNews(currentQuery, isNewSearch = false)
                 }
 
                 // Scroll to top button animation
                 if (layoutManager.findFirstVisibleItemPosition() > 5) {
-                    if (scrollToTopBtn.visibility != View.VISIBLE) {
+                    if (!scrollToTopBtn.isVisible) {
                         scrollToTopBtn.animate()
                             .alpha(1f)
                             .setDuration(300)
