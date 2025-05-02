@@ -83,5 +83,6 @@ dependencies {
     implementation(libs.shimmer)
     implementation(libs.androidx.core.ktx.v1120)
     implementation(libs.logging.interceptor)
+    implementation(libs.androidx.work.runtime.ktx)
     kapt(libs.compiler)
 }

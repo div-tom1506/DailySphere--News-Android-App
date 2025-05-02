@@ -40,7 +40,10 @@ class NewsAdapter(private var articles: List<Article>) :
         if (imageUrl.isNullOrEmpty()) {
             android.util.Log.d("NewsAdapter", "Image URL is null or empty at position $position")
         } else {
-            android.util.Log.d("NewsAdapter", "Loading image from URL: $imageUrl at position $position")
+            android.util.Log.d(
+                "NewsAdapter",
+                "Loading image from URL: $imageUrl at position $position"
+            )
             Glide.with(holder.itemView.context)
                 .load(imageUrl)
                 .placeholder(R.drawable.shimmer_drawable)
@@ -55,7 +58,10 @@ class NewsAdapter(private var articles: List<Article>) :
                 val intent = Intent(holder.itemView.context, WebViewActivity::class.java)
                 intent.putExtra("URL", url) // Passing the URL to WebViewActivity
                 holder.itemView.context.startActivity(intent)
-                (holder.itemView.context as Activity).overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out)
+                (holder.itemView.context as Activity).overridePendingTransition(
+                    android.R.anim.fade_in,
+                    android.R.anim.fade_out
+                )
             }
         }
     }

@@ -3,6 +3,7 @@ package com.divyanshu.dailysphere
 import android.content.Context
 import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
+import android.os.Build
 import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
@@ -17,6 +18,7 @@ import android.widget.Spinner
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.app.ActivityCompat
 import androidx.core.view.isVisible
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -26,6 +28,7 @@ import com.divyanshu.dailysphere.adapter.NewsAdapter
 import com.divyanshu.dailysphere.model.CategoryItem
 import com.divyanshu.dailysphere.model.NewsResponse
 import com.divyanshu.dailysphere.network.RetrofitInstance
+import com.divyanshu.dailysphere.worker.BreakingNewsWorkScheduler
 import com.facebook.shimmer.ShimmerFrameLayout
 import retrofit2.Call
 import retrofit2.Callback
@@ -74,6 +77,20 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+
+        // Requesting Notification Permission for Android 13+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            ActivityCompat.requestPermissions(
+                this,
+                arrayOf(android.Manifest.permission.POST_NOTIFICATIONS),
+                1
+            )
+        }
+
+        // for scheduling notification worker
+        BreakingNewsWorkScheduler.scheduleBreakingNewsWorker(this)
+        // for immediate testing the notification worker
+//         BreakingNewsWorkScheduler.triggerOneTimeBreakingNewsWorker(this)
 
         Log.d("MainActivity", "onCreate: Initializing views")
 

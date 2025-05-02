@@ -14,22 +14,22 @@
         android:layout_height="wrap_content"
         android:layout_alignParentTop="true"
         android:background="?attr/colorPrimary"
-        android:orientation="horizontal"
         android:gravity="center_vertical"
+        android:orientation="horizontal"
         android:padding="8dp">
 
         <EditText
             android:id="@+id/editTextSearch"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
+            android:layout_marginEnd="8dp"
             android:layout_weight="1"
             android:background="@drawable/search_edittext_background"
             android:drawableStart="@drawable/ic_search"
             android:drawablePadding="8dp"
             android:hint="@string/search_news"
             android:inputType="text"
-            android:padding="8dp"
-            android:layout_marginEnd="8dp" />
+            android:padding="8dp" />
 
         <ImageButton
             android:id="@+id/settingsButton"
