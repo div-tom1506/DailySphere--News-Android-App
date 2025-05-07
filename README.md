@@ -18,9 +18,6 @@
 ---
 
 ## 📷 Screenshots
-
-_Add screenshots here (recommended sizes: 1080x1920px)_
-
 ---
 
 ## 🛠️ Tech Stack
